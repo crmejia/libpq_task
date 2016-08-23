@@ -15,15 +15,17 @@ exit_nicely(PGconn *conn)
     exit(1);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-    const char *fooconninfo;
+    const char *fooconninfo, *barconninfo;
     PGconn     *conn;
     PGresult   *res;
     const char *errormessage;
-    int         copyresult;
+    int         copyresult, i, rowsize;
+    const int n = 100;
     fooconninfo = "dbname = foo";
+    barconninfo = "dbname = bar"
+    char *row;
 
     /* Make a connection to the database */
     conn = PQconnectdb(fooconninfo);
@@ -46,11 +48,14 @@ main(int argc, char **argv)
         exit_nicely(conn);
     }
     /* PGRES_COMMAND_OK */
+    for(i = 0; i < n; i++)
+    {
+      // sprintf(population, "%d,%d,%d\n", i,i,i);
+      sprintf(row, "%d,%d,%d\n", i,i%3,i%6);
+      copyresult = PQputCopyData(conn,row, strlen(row));
+      while(copyresult == 0){}
+    }
 
-    // copyresult = PQputCopyData(conn,"1,4,4\n4,1,4\n4,4,1\n", 18);
-    copyresult = PQputCopyData(conn,"1,4,4\n", 6);
-    copyresult = PQputCopyData(conn,"4,1,4\n", 6);
-    copyresult = PQputCopyData(conn,"4,4,1\n", 6);
 
     if(copyresult <= 0)
     {
