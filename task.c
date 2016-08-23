@@ -23,13 +23,12 @@ exit_nicely(PGconn *conn1, PGconn *conn2)
     exit(1);
 }
 
-
 void populateFoo(PGconn *conn)
 {
   PGresult   *res;
   const char *errormessage;
-  int         copyresult, i, rowsize;
-  const int   n = 100;
+  int         copyresult = 0, i, rowsize;
+  const int   n = 1000000;
   char       *row;
 
   /* Start COPY command to populate foo's source table*/
@@ -48,10 +47,12 @@ void populateFoo(PGconn *conn)
   {
     if(asprintf(&row, "%d,%d,%d\n", i,i%3,i%6) < 0)
       return;
+
     copyresult = PQputCopyData(conn,row, strlen(row));
-    /*keep trying until buffer is empty */
-    while(copyresult == 0){}
-    if(copyresult <= 0)
+    free(row);
+
+    /*exit is there is an error*/
+    if(copyresult < 0)
     {
       fprintf(stderr, "COPY INTO source failed: %s\n", PQerrorMessage(conn));
       PQclear(res);
@@ -60,6 +61,7 @@ void populateFoo(PGconn *conn)
   }
 
   copyresult = PQputCopyEnd(conn, errormessage);
+
   if (errormessage)
   {
       fprintf(stderr, "COPY END failed: %s\n", errormessage);
@@ -74,11 +76,10 @@ void copyFromFootoBar(PGconn *fooconn, PGconn *barconn)
   PGresult   *foores, *barres;
   const char *errormessage;
   int foocopyresult = 0;
-  int barcopyresult;
+  int barcopyresult = 0;
   char *foorow;
 
-  /* Start COPY FROM source to STDOUT and
-     COPY dest from STDIN */
+  /* Start COPY FROM source to STDOUT */
   foores = PQexec(fooconn, "COPY source to STDOUT");
 
   if (PQresultStatus(foores) == PGRES_FATAL_ERROR)
@@ -88,6 +89,7 @@ void copyFromFootoBar(PGconn *fooconn, PGconn *barconn)
       exit_nicely(fooconn, barconn);
   }
 
+  /* Start COPY dest from STDIN */
   barres = PQexec(barconn, "COPY dest from STDIN");
   if (PQresultStatus(barres) == PGRES_FATAL_ERROR)
   {
@@ -105,9 +107,10 @@ void copyFromFootoBar(PGconn *fooconn, PGconn *barconn)
       PQclear(foores);
       exit_nicely(fooconn, barconn);
     }
+
     barcopyresult = PQputCopyData(barconn, foorow, foocopyresult);
-    while(barcopyresult == 0){}
-    if(barcopyresult <= 0)
+
+    if(barcopyresult < 0)
     {
       fprintf(stderr, "COPY INTO source failed: %s\n", PQerrorMessage(barconn));
       PQclear(barres);
