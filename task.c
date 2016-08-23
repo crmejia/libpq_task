@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <libpq-fe.h>
+#include <string.h>
 
 static void
 exit_nicely(PGconn *conn)
@@ -22,7 +23,6 @@ main(int argc, char **argv)
     PGresult   *res;
     const char *errormessage;
     int         copyresult;
-
     fooconninfo = "dbname = foo";
 
     /* Make a connection to the database */
@@ -47,7 +47,10 @@ main(int argc, char **argv)
     }
     /* PGRES_COMMAND_OK */
 
-    copyresult = PQputCopyData(conn,"4,4,4", 5);
+    // copyresult = PQputCopyData(conn,"1,4,4\n4,1,4\n4,4,1\n", 18);
+    copyresult = PQputCopyData(conn,"1,4,4\n", 6);
+    copyresult = PQputCopyData(conn,"4,1,4\n", 6);
+    copyresult = PQputCopyData(conn,"4,4,1\n", 6);
 
     if(copyresult <= 0)
     {
@@ -57,14 +60,13 @@ main(int argc, char **argv)
     }
 
     copyresult = PQputCopyEnd(conn, errormessage);
-
     if (errormessage)
     {
-        fprintf(stderr, "COPY END failed: %s", errormessage);
+        fprintf(stderr, "COPY END failed: %s\n", errormessage);
         PQclear(res);
         exit_nicely(conn);
     }
-printf("%d\n", copyresult);
+
     /* close the connection to the database and cleanup */
     PQfinish(conn);
 
