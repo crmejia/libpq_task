@@ -28,7 +28,7 @@ void populateFoo(PGconn *conn)
   PGresult   *res;
   const char *errormessage;
   int         copyresult = 0, i, rowsize;
-  const int   n = 1000000;
+  const int   n = 1000001;
   char       *row;
 
   /* Start COPY command to populate foo's source table*/
@@ -43,7 +43,7 @@ void populateFoo(PGconn *conn)
 
   /* PGRES_COMMAND_OK */
 
-  for(i = 0; i < n; i++)
+  for(i = 1; i < n; i++)
   {
     if(asprintf(&row, "%d,%d,%d\n", i,i%3,i%6) < 0)
       return;
