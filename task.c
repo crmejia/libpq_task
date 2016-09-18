@@ -1,8 +1,3 @@
-/*
- * testlibpq.c
- *
- *      Test the C version of libpq, the PostgreSQL frontend library.
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <libpq-fe.h>
